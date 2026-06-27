@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevTools Pro · 开发者工具集锦</title>
+<style>
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --bg-hover: #30363d;
+  --border: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --accent-green: #3fb950;
+  --accent-red: #f85149;
+  --accent-orange: #d29922;
+  --accent-purple: #bc8cff;
+  --shadow: 0 8px 24px rgba(0,0,0,.4);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --sidebar-w: 220px;
+  --header-h: 52px;
+  --font: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono: "SF Mono","Cascadia Code","Fira Code","Consolas",monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg-primary);color:var(--text-primary);font-size:14px;line-height:1.5;display:flex;flex-direction:column}
+/* scrollbar */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg-hover);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;height:var(--header-h);padding:0 20px;border-bottom:1px solid var(--border);background:var(--bg-secondary);flex-shrink:0}
+.header h1{font-size:16px;font-weight:600;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+.header h1 span{color:var(--accent)}
+.lang-toggle{display:flex;gap:0;background:var(--bg-tertiary);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;border:1px solid var(--border)}
+.lang-btn{padding:4px 12px;font-size:12px;font-weight:500;transition:all .15s;user-select:none;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-family:var(--font)}
+.lang-btn.active{background:var(--accent);color:#fff}
+.lang-btn:not(.active):hover{color:var(--text-primary)}
+
+/* Layout */
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:var(--sidebar-w);background:var(--bg-secondary);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:8px 0}
+.sidebar-group{padding:0 8px;margin-bottom:4px}
+.sidebar-group-title{padding:6px 12px 4px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:all .12s;color:var(--text-secondary);font-size:13px;user-select:none}
+.sidebar-item:hover{background:var(--bg-hover);color:var(--text-primary)}
+.sidebar-item.active{background:var(--bg-tertiary);color:var(--accent);font-weight:500}
+.sidebar-item .icon{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+
+/* Main */
+.main{flex:1;overflow-y:auto;padding:20px 24px 40px}
+.tool-panel{display:none;animation:fadeIn .2s ease}
+.tool-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.tool-header{margin-bottom:20px}
+.tool-title{font-size:22px;font-weight:600;margin-bottom:4px}
+.tool-desc{color:var(--text-secondary);font-size:13px}
+
+/* Form elements */
+label{display:block;margin-bottom:4px;font-size:12px;font-weight:500;color:var(--text-secondary)}
+input,textarea,select{width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:var(--font);transition:border .15s;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px;font-family:var(--mono);font-size:12px;line-height:1.6}
+input[type="text"]{font-family:var(--mono);font-size:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.row>*{flex:1;min-width:140px}
+.col{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+
+.btn{padding:6px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);cursor:pointer;font-size:12px;font-weight:500;transition:all .12s;display:inline-flex;align-items:center;gap:6px;font-family:var(--font)}
+.btn:hover{background:var(--bg-hover);border-color:var(--text-muted)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-success{background:var(--accent-green);color:#fff;border-color:var(--accent-green)}
+.btn-danger{background:var(--accent-red);color:#fff;border-color:var(--accent-red)}
+.btn-sm{padding:3px 10px;font-size:11px}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+
+.result-box{background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-family:var(--mono);font-size:12px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-all;min-height:36px;margin-bottom:12px;position:relative}
+.result-box .copy-btn{position:absolute;top:6px;right:6px}
+.copy-btn{opacity:0;transition:opacity .15s}
+.result-box:hover .copy-btn,.copy-btn.show{opacity:1}
+
+.error-msg{color:var(--accent-red);font-size:12px;margin-top:4px;display:none}
+.error-msg.show{display:block}
+.success-msg{color:var(--accent-green);font-size:12px;margin-top:4px;display:none}
+.success-msg.show{display:block}
+
+/* Color swatch */
+.color-preview{width:100%;height:60px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:12px;transition:background .15s}
+
+/* Checkbox / toggle */
+.checkbox-group{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.checkbox-group label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer}
+.checkbox-group input[type="checkbox"]{width:auto;cursor:pointer}
+
+/* Case converter output */
+.case-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.case-label{width:120px;font-size:11px;font-weight:600;color:var(--text-muted);flex-shrink:0;text-align:right}
+.case-value{flex:1;font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--text-primary)}
+.case-value .btn{flex-shrink:0}
+
+/* Timestamp info */
+.ts-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.ts-info .ts-card{background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.ts-info .ts-card .val{font-size:18px;font-weight:600;font-family:var(--mono);color:var(--accent)}
+.ts-info .ts-card .lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+/* Number base */
+.base-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.base-item{padding:10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.base-item .base-label{font-size:11px;color:var(--text-muted);margin-bottom:2px}
+.base-item .base-val{font-family:var(--mono);font-size:13px;word-break:break-all}
+.base-item .base-val .btn{vertical-align:middle}
+
+/* UUID list */
+.uuid-list{max-height:200px;overflow-y:auto}
+.uuid-item{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;font-family:var(--mono);font-size:11px;border-bottom:1px solid var(--border);gap:8px}
+.uuid-item:last-child{border-bottom:none}
+.uuid-item .uuid-text{flex:1;word-break:break-all}
+
+/* responsive */
+@media(max-width:768px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;max-height:180px;border-right:none;border-bottom:1px solid var(--border)}
+  .sidebar-group{display:flex;flex-wrap:wrap;gap:2px}
+  .sidebar-group-title{display:none}
+  .sidebar-item{padding:5px 10px;font-size:12px}
+  .main{padding:12px 16px 80px}
+  .ts-info,.base-grid{grid-template-columns:1fr}
+  .case-row{flex-wrap:wrap}
+  .case-label{width:100%;text-align:left}
+  .row{flex-direction:column}
+  .row>*{min-width:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>◈</span> DevTools <span id="header-sub">· 开发者工具</span></h1>
+  <div class="lang-toggle" id="langToggle">
+    <button class="lang-btn active" data-lang="zh">中</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main" id="mainContent"></main>
+</div>
+
+<script>
+// ==================== i18n ====================
+const I18N = {
+  zh: {
+    title: 'DevTools · 开发者工具',
+    brand: '开发者工具',
+    tools: {
+      json:       { name: 'JSON 格式化',           desc: '格式化、验证和美化 JSON 数据' },
+      base64:     { name: 'Base64 编解码',         desc: 'Base64 编码与解码转换' },
+      url:        { name: 'URL 编解码',            desc: 'URL 编码与解码转换' },
+      color:      { name: '颜色转换器',            desc: 'HEX / RGB / HSL 颜色格式互转' },
+      timestamp:  { name: '时间戳转换',            desc: 'Unix 时间戳与日期互转' },
+      uuid:       { name: 'UUID 生成器',           desc: '生成 UUID v4 唯一标识符' },
+      regex:      { name: '正则测试器',            desc: '测试和调试正则表达式' },
+      hash:       { name: '哈希生成器',            desc: 'MD5 / SHA-1 / SHA-256 / SHA-512' },
+      case:       { name: '大小写转换',            desc: '多种命名格式互转' },
+      base:       { name: '进制转换',              desc: '二进制 / 八进制 / 十进制 / 十六进制互转' },
+      html:       { name: 'HTML 实体编解码',       desc: 'HTML 特殊字符编码与解码' },
+      jwt:        { name: 'JWT 解码器',            desc: '解码 JSON Web Token' },
+    },
+    ui: {
+      format: '格式化', validate: '验证', copy: '复制', copied: '已复制!',
+      encode: '编码', decode: '解码', clear: '清空', generate: '生成',
+      input: '输入', output: '输出', error: '错误', result: '结果',
+      current_ts: '当前时间戳', current_date: '当前日期',
+      ts_input: '输入时间戳 (秒)', date_input: '选择日期时间',
+      convert: '转换', to_date: '转日期', to_ts: '转时间戳',
+      pattern: '正则表达式', test_text: '测试文本',
+      flags: '标记', match_count: '匹配', matches: '个结果',
+      no_match: '无匹配', hash_algorithm: '哈希算法',
+      hex: '十六进制', dec: '十进制', oct: '八进制', bin: '二进制',
+      jwt_header: 'Header', jwt_payload: 'Payload',
+      jwt_exp: '过期时间', jwt_remaining: '剩余时间',
+      jwt_expired: '已过期', plain_text: '纯文本',
+      uppercase: '大写', lowercase: '小写', count: '数量',
+      preview: '预览', all_formats: '所有格式',
+      placeholder_json: '输入 JSON 字符串...',
+      placeholder_text: '输入文本...',
+      placeholder_base64: '输入 Base64 字符串...',
+      placeholder_url: '输入 URL 或文本...',
+      placeholder_regex: '输入正则表达式',
+      placeholder_test: '输入要测试的文本...',
+      placeholder_token: '输入 JWT Token...',
+      placeholder_hash: '输入要哈希的文本...',
+      placeholder_num: '输入数字...',
+      placeholder_html: '输入 HTML 或文本...',
+      invalid_json: '无效的 JSON',
+      invalid_base64: '无效的 Base64 编码',
+      invalid_url: 'URL 解码失败',
+      invalid_ts: '无效的时间戳',
+      invalid_color: '无法识别的颜色格式',
+      invalid_token: '无效的 JWT Token',
+      case_camel: 'camelCase',
+      case_pascal: 'PascalCase',
+      case_snake: 'snake_case',
+      case_kebab: 'kebab-case',
+      case_upper: 'UPPER CASE',
+      case_lower: 'lower case',
+      case_title: 'Title Case',
+      case_dot: 'dot.case',
+      flag_ci: '忽略大小写', flag_g: '全局', flag_m: '多行', flag_s: '单行匹配',
+      expires_prefix: '于 ', expires_mid: ' 过期，', expires_suffix: '后过期',
+      remaining_days: '天', remaining_hours: '小时', remaining_mins: '分钟',
+    },
+  },
+  en: {
+    title: 'DevTools Pro · Developer Toolbox',
+    brand: 'Developer Tools',
+    tools: {
+      json:       { name: 'JSON Formatter',        desc: 'Format, validate & beautify JSON data' },
+      base64:     { name: 'Base64 Codec',          desc: 'Base64 encode & decode converter' },
+      url:        { name: 'URL Codec',             desc: 'URL encode & decode converter' },
+      color:      { name: 'Color Converter',       desc: 'HEX / RGB / HSL color conversion' },
+      timestamp:  { name: 'Timestamp Converter',   desc: 'Unix timestamp & date converter' },
+      uuid:       { name: 'UUID Generator',        desc: 'Generate UUID v4 identifiers' },
+      regex:      { name: 'Regex Tester',          desc: 'Test and debug regular expressions' },
+      hash:       { name: 'Hash Generator',        desc: 'MD5 / SHA-1 / SHA-256 / SHA-512' },
+      case:       { name: 'Case Converter',        desc: 'Convert between naming conventions' },
+      base:       { name: 'Base Converter',         desc: 'Binary / Octal / Decimal / Hex' },
+      html:       { name: 'HTML Entity Codec',     desc: 'HTML entity encode & decode' },
+      jwt:        { name: 'JWT Decoder',           desc: 'Decode JSON Web Tokens' },
+    },
+    ui: {
+      format: 'Format', validate: 'Validate', copy: 'Copy', copied: 'Copied!',
+      encode: 'Encode', decode: 'Decode', clear: 'Clear', generate: 'Generate',
+      input: 'Input', output: 'Output', error: 'Error', result: 'Result',
+      current_ts: 'Current Timestamp', current_date: 'Current Date',
+      ts_input: 'Enter timestamp (seconds)', date_input: 'Pick date & time',
+      convert: 'Convert', to_date: 'To Date', to_ts: 'To Timestamp',
+      pattern: 'Pattern', test_text: 'Test Text',
+      flags: 'Flags', match_count: 'Match', matches: 'matches',
+      no_match: 'No match', hash_algorithm: 'Hash Algorithm',
+      hex: 'Hexadecimal', dec: 'Decimal', oct: 'Octal', bin: 'Binary',
+      jwt_header: 'Header', jwt_payload: 'Payload',
+      jwt_exp: 'Expiration', jwt_remaining: 'Time Remaining',
+      jwt_expired: 'Expired', plain_text: 'Plain Text',
+      uppercase: 'Uppercase', lowercase: 'Lowercase', count: 'Count',
+      preview: 'Preview', all_formats: 'All Formats',
+      placeholder_json: 'Enter JSON string...',
+      placeholder_text: 'Enter text...',
+      placeholder_base64: 'Enter Base64 string...',
+      placeholder_url: 'Enter URL or text...',
+      placeholder_regex: 'Enter regex pattern',
+      placeholder_test: 'Enter test text...',
+      placeholder_token: 'Enter JWT Token...',
+      placeholder_hash: 'Enter text to hash...',
+      placeholder_num: 'Enter a number...',
+      placeholder_html: 'Enter HTML or text...',
+      invalid_json: 'Invalid JSON',
+      invalid_base64: 'Invalid Base64 input',
+      invalid_url: 'URL decode failed',
+      invalid_ts: 'Invalid timestamp',
+      invalid_color: 'Unrecognized color format',
+      invalid_token: 'Invalid JWT Token',
+      case_camel: 'camelCase',
+      case_pascal: 'PascalCase',
+      case_snake: 'snake_case',
+      case_kebab: 'kebab-case',
+      case_upper: 'UPPER CASE',
+      case_lower: 'lower case',
+      case_title: 'Title Case',
+      case_dot: 'dot.case',
+      flag_ci: 'Ignore Case', flag_g: 'Global', flag_m: 'Multiline', flag_s: 'Dot All',
+      expires_prefix: 'Expires ', expires_mid: ', ', expires_suffix: ' remaining',
+      remaining_days: 'd', remaining_hours: 'h', remaining_mins: 'm',
+    },
+  },
+};
+
+let lang = localStorage.getItem('devtools-lang') || 'en';
+
+function t(key) {
+  const keys = key.split('.');
+  let o = I18N[lang];
+  for (const k of keys) if (o) o = o[k];
+  return o || key;
+}
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('devtools-lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === l));
+  document.title = t('title');
+  document.getElementById('header-sub').textContent = lang === 'zh' ? '· 开发者工具' : '· Developer Toolbox';
+  renderSidebar();
+  renderCurrentTool();
+}
+
+// ==================== State ====================
+const TOOLS = ['json','base64','url','color','timestamp','uuid','regex','hash','case','base','html','jwt'];
+const COLORS = [
+  {icon:'{ }',id:'json'},{icon:'B64',id:'base64'},{icon:'URL',id:'url'},{icon:'🎨',id:'color'},
+  {icon:'⏱',id:'timestamp'},{icon:'🔑',id:'uuid'},{icon:'.*',id:'regex'},{icon:'#',id:'hash'},
+  {icon:'Aa',id:'case'},{icon:'10',id:'base'},{icon:'&lt;',id:'html'},{icon:'JWT',id:'jwt'}
+];
+let currentTool = localStorage.getItem('devtools-current') || 'json';
+
+// ==================== MD5 ====================
+function md5(s) {
+  function md5cycle(x,k){let a=x[0],b=x[1],c=x[2],d=x[3];a=ff(a,b,c,d,k[0],7,-680876936);d=ff(d,a,b,c,k[1],12,-389564586);c=ff(c,d,a,b,k[2],17,606105819);b=ff(b,c,d,a,k[3],22,-1044525330);a=ff(a,b,c,d,k[4],7,-176418897);d=ff(d,a,b,c,k[5],12,1200080426);c=ff(c,d,a,b,k[6],17,-1473231341);b=ff(b,c,d,a,k[7],22,-45705983);a=ff(a,b,c,d,k[8],7,1770035416);d=ff(d,a,b,c,k[9],12,-1958414417);c=ff(c,d,a,b,k[10],17,-42063);b=ff(b,c,d,a,k[11],22,-1990404162);a=ff(a,b,c,d,k[12],7,1804603682);d=ff(d,a,b,c,k[13],12,-40341101);c=ff(c,d,a,b,k[14],17,-1502002290);b=ff(b,c,d,a,k[15],22,1236535329);a=gg(a,b,c,d,k[1],5,-165796510);d=gg(d,a,b,c,k[6],9,-1069501632);c=gg(c,d,a,b,k[11],14,643717713);b=gg(b,c,d,a,k[0],20,-373897302);a=gg(a,b,c,d,k[5],5,-701558691);d=gg(d,a,b,c,k[10],9,38016083);c=gg(c,d,a,b,k[15],14,-660478335);b=gg(b,c,d,a,k[4],20,-405537848);a=gg(a,b,c,d,k[9],5,568446438);d=gg(d,a,b,c,k[14],9,-1019803690);c=gg(c,d,a,b,k[3],14,-187363961);b=gg(b,c,d,a,k[8],20,1163531501);a=gg(a,b,c,d,k[13],5,-1444681467);d=gg(d,a,b,c,k[2],9,-51403784);c=gg(c,d,a,b,k[7],14,1735328473);b=gg(b,c,d,a,k[12],20,-1926607734);a=hh(a,b,c,d,k[5],4,-378558);d=hh(d,a,b,c,k[8],11,-2022574463);c=hh(c,d,a,b,k[11],16,1839030562);b=hh(b,c,d,a,k[14],23,-35309556);a=hh(a,b,c,d,k[1],4,-1530992060);d=hh(d,a,b,c,k[4],11,1272893353);c=hh(c,d,a,b,k[7],16,-155497632);b=hh(b,c,d,a,k[10],23,-1094730640);a=hh(a,b,c,d,k[13],4,681279174);d=hh(d,a,b,c,k[0],11,-358537222);c=hh(c,d,a,b,k[3],16,-722521979);b=hh(b,c,d,a,k[6],23,76029189);a=hh(a,b,c,d,k[9],4,-640364487);d=hh(d,a,b,c,k[12],11,-421815835);c=hh(c,d,a,b,k[15],16,530742520);b=hh(b,c,d,a,k[2],23,-995338651);a=ii(a,b,c,d,k[0],6,-198630844);d=ii(d,a,b,c,k[7],10,1126891415);c=ii(c,d,a,b,k[14],15,-1416354905);b=ii(b,c,d,a,k[5],21,-57434055);a=ii(a,b,c,d,k[12],6,1700485571);d=ii(d,a,b,c,k[3],10,-1894986606);c=ii(c,d,a,b,k[10],15,-1051523);b=ii(b,c,d,a,k[1],21,-2054922799);a=ii(a,b,c,d,k[8],6,1873313359);d=ii(d,a,b,c,k[15],10,-30611744);c=ii(c,d,a,b,k[6],15,-1560198380);b=ii(b,c,d,a,k[13],21,1309151649);a=ii(a,b,c,d,k[4],6,-145523070);d=ii(d,a,b,c,k[11],10,-1120210379);c=ii(c,d,a,b,k[2],15,718787259);b=ii(b,c,d,a,k[9],21,-343485551);x[0]=add32(a,x[0]);x[1]=add32(b,x[1]);x[2]=add32(c,x[2]);x[3]=add32(d,x[3])}
+  function cmn(q,a,b,x,s,t){return add32(bitRol(add32(add32(a,q),add32(x,t)),s),b)}
+  function ff(a,b,c,d,x,s,t){return cmn(b&c|~b&d,a,b,x,s,t)}
+  function gg(a,b,c,d,x,s,t){return cmn(b&d|c&~d,a,b,x,s,t)}
+  function hh(a,b,c,d,x,s,t){return cmn(b^c^d,a,b,x,s,t)}
+  function ii(a,b,c,d,x,s,t){return cmn(c^(b|~d),a,b,x,s,t)}
+  function bitRol(v,c){return v<<c|v>>>32-c}
+  function add32(a,b){return a+b&0xffffffff}
+  function str2binl(s){let r=Array(s.length>>2);for(let i=0;i<r.length;i++)r[i]=0;for(let i=0;i<s.length*8;i+=8)r[i>>5]|=(s.charCodeAt(i/8)&0xff)<<i%32;return r}
+  function binl2hex(a){let h='0123456789abcdef';let r='';for(let i=0;i<a.length*4;i++){r+=h.charAt(a[i>>2]>>i%4*8+4&0xf)+h.charAt(a[i>>2]>>i%4*8&0xf)}return r}
+  let x=str2binl(unescape(encodeURIComponent(s)));let a=1732584193;let b=-271733879;let c=-1732584194;let d=271733878;let l=x.length*32;x[l>>5]|=0x80<<l%32;x[((l+64>>>9)<<4)+14]=l;let N=x.length;for(let i=0;i<N;i+=16){md5cycle(x.slice(i,i+16),[a,b,c,d]);a=add32(a,0);b=add32(b,0);c=add32(c,0);d=add32(d,0)}return binl2hex([a,b,c,d]);
+}
+
+// ==================== Hash via Web Crypto ====================
+async function hashText(text, algo) {
+  if (algo === 'md5') return md5(text);
+  const name = algo === 'sha1' ? 'SHA-1' : algo === 'sha256' ? 'SHA-256' : 'SHA-512';
+  const buf = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest(name, buf);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ==================== Helpers ====================
+function copyText(text, btn) {
+  if (!text) return;
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+  else { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  const orig = btn.textContent;
+  btn.textContent = t('ui.copied');
+  btn.style.opacity = '1';
+  setTimeout(() => { btn.textContent = orig; btn.style.opacity = ''; }, 1200);
+}
+
+function err(el, msg) { el.textContent = msg; el.classList.add('show'); }
+function clearErr(el) { el.classList.remove('show'); }
+function ok(el, msg) { el.textContent = msg; el.classList.add('show'); }
+function clearOk(el) { el.classList.remove('show'); }
+
+// ==================== Sidebar ====================
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = `<div class="sidebar-group">${TOOLS.map(id => {
+    const info = COLORS.find(c => c.id === id);
+    return `<div class="sidebar-item${currentTool===id?' active':''}" data-tool="${id}"><span class="icon">${info.icon}</span> <span>${t('tools.'+id+'.name')}</span></div>`;
+  }).join('')}</div>`;
+}
+
+// ==================== Render Tools ====================
+function toolJSON() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.json.name')}</div><div class="tool-desc">${t('tools.json.desc')}</div></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="jsonFormat">${t('ui.format')}</button>
+      <button class="btn" id="jsonValidate">${t('ui.validate')}</button>
+      <button class="btn" id="jsonClear">${t('ui.clear')}</button>
+    </div>
+    <label>${t('ui.input')}</label>
+    <textarea id="jsonInput" rows="10" placeholder='${t('ui.placeholder_json')}'></textarea>
+    <div class="error-msg" id="jsonErr"></div>
+    <label>${t('ui.output')}</label>
+    <div class="result-box" id="jsonResult"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="jsonCopy">${t('ui.copy')}</button></div>`;
+}
+
+function bindJSON() {
+  const inp = document.getElementById('jsonInput');
+  const res = document.getElementById('jsonResult');
+  const errEl = document.getElementById('jsonErr');
+  const fmt = (v) => { clearErr(errEl); try { const p = JSON.parse(v); res.innerHTML = JSON.stringify(p,null,2)+'<button class="btn btn-sm copy-btn show" id="jsonCopy">'+t('ui.copy')+'</button>'; bindCopy('jsonCopy',()=>res.textContent); } catch(e) { err(errEl, t('ui.invalid_json')+': '+e.message); } };
+  document.getElementById('jsonFormat').onclick = () => { if(inp.value.trim()) fmt(inp.value); };
+  document.getElementById('jsonValidate').onclick = () => { clearErr(errEl); try { JSON.parse(inp.value); ok(errEl, '✓ JSON '+t('ui.result')); setTimeout(()=>clearOk(errEl),2000); } catch(e) { err(errEl, t('ui.invalid_json')+': '+e.message); } };
+  document.getElementById('jsonClear').onclick = () => { inp.value=''; res.innerHTML='<span style="color:var(--text-muted)">'+t('ui.result')+'</span><button class="btn btn-sm copy-btn" id="jsonCopy">'+t('ui.copy')+'</button>'; clearErr(errEl); bindCopy('jsonCopy',()=>res.textContent); };
+  document.getElementById('jsonCopy').onclick = () => copyText(res.textContent.replace(t('ui.copied'),'').trim(), document.getElementById('jsonCopy'));
+  bindCopy('jsonCopy',()=>res.textContent);
+  function bindCopy(id,getText){const el=document.getElementById(id);if(el)el.onclick=()=>copyText(getText().replace(t('ui.copied'),'').trim(),el);}
+}
+
+// --- Base64 ---
+function toolBase64() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.base64.name')}</div><div class="tool-desc">${t('tools.base64.desc')}</div></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="b64Encode">${t('ui.encode')}</button>
+      <button class="btn" id="b64Decode">${t('ui.decode')}</button>
+      <button class="btn" id="b64Clear">${t('ui.clear')}</button>
+    </div>
+    <label>${t('ui.input')}</label>
+    <textarea id="b64Input" rows="6" placeholder="${t('ui.placeholder_text')}"></textarea>
+    <div class="error-msg" id="b64Err"></div>
+    <label>${t('ui.output')}</label>
+    <div class="result-box" id="b64Result"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="b64Copy">${t('ui.copy')}</button></div>`;
+}
+function bindBase64() {
+  const inp=document.getElementById('b64Input'),res=document.getElementById('b64Result'),errEl=document.getElementById('b64Err');
+  const show=(v)=>{res.innerHTML=(v||'<span style=\"color:var(--text-muted)\">'+t('ui.result')+'</span>')+'<button class="btn btn-sm copy-btn show" id="b64Copy">'+t('ui.copy')+'</button>';bindCopy('b64Copy');};
+  document.getElementById('b64Encode').onclick=()=>{clearErr(errEl);try{show(btoa(unescape(encodeURIComponent(inp.value))))}catch(e){err(errEl,t('ui.error'));}};
+  document.getElementById('b64Decode').onclick=()=>{clearErr(errEl);try{show(decodeURIComponent(escape(atob(inp.value))))}catch(e){err(errEl,t('ui.invalid_base64'));}};
+  document.getElementById('b64Clear').onclick=()=>{inp.value='';show();clearErr(errEl);};
+  function bindCopy(id){const el=document.getElementById(id);if(el)el.onclick=()=>copyText(res.textContent.replace(t('ui.copied'),'').trim(),el);}
+  bindCopy('b64Copy');
+}
+
+// --- URL ---
+function toolURL() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.url.name')}</div><div class="tool-desc">${t('tools.url.desc')}</div></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="urlEncode">${t('ui.encode')}</button>
+      <button class="btn" id="urlDecode">${t('ui.decode')}</button>
+      <button class="btn" id="urlClear">${t('ui.clear')}</button>
+    </div>
+    <label>${t('ui.input')}</label>
+    <textarea id="urlInput" rows="6" placeholder="${t('ui.placeholder_url')}"></textarea>
+    <div class="error-msg" id="urlErr"></div>
+    <label>${t('ui.output')}</label>
+    <div class="result-box" id="urlResult"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="urlCopy">${t('ui.copy')}</button></div>`;
+}
+function bindURL() {
+  const inp=document.getElementById('urlInput'),res=document.getElementById('urlResult'),errEl=document.getElementById('urlErr');
+  const show=(v)=>{res.innerHTML=(v||'<span style=\"color:var(--text-muted)\">'+t('ui.result')+'</span>')+'<button class="btn btn-sm copy-btn show" id="urlCopy">'+t('ui.copy')+'</button>';bindCopy('urlCopy');};
+  document.getElementById('urlEncode').onclick=()=>{clearErr(errEl);try{show(encodeURIComponent(inp.value))}catch(e){err(errEl,t('ui.error'));}};
+  document.getElementById('urlDecode').onclick=()=>{clearErr(errEl);try{show(decodeURIComponent(inp.value))}catch(e){err(errEl,t('ui.invalid_url'));}};
+  document.getElementById('urlClear').onclick=()=>{inp.value='';show();clearErr(errEl);};
+  function bindCopy(id){const el=document.getElementById(id);if(el)el.onclick=()=>copyText(res.textContent.replace(t('ui.copied'),'').trim(),el);}
+  bindCopy('urlCopy');
+}
+
+// --- Color ---
+function toolColor() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.color.name')}</div><div class="tool-desc">${t('tools.color.desc')}</div></div>
+    <div class="color-preview" id="colorPreview" style="background:#58a6ff"></div>
+    <label>${t('ui.input')}</label>
+    <input type="text" id="colorInput" placeholder="#ff6600 / rgb(255,102,0) / hsl(30,100%,50%)" value="#58a6ff">
+    <div class="error-msg" id="colorErr"></div>
+    <div class="base-grid" id="colorOutput">
+      <div class="base-item"><div class="base-label">HEX</div><div class="base-val" id="colorHex">#58a6ff <button class="btn btn-sm" data-copy="colorHex">${t('ui.copy')}</button></div></div>
+      <div class="base-item"><div class="base-label">RGB</div><div class="base-val" id="colorRgb">rgb(88,166,255) <button class="btn btn-sm" data-copy="colorRgb">${t('ui.copy')}</button></div></div>
+      <div class="base-item"><div class="base-label">HSL</div><div class="base-val" id="colorHsl">hsl(212,100%,67%) <button class="btn btn-sm" data-copy="colorHsl">${t('ui.copy')}</button></div></div>
+    </div>`;
+}
+function bindColor() {
+  const inp=document.getElementById('colorInput'),preview=document.getElementById('colorPreview'),errEl=document.getElementById('colorErr');
+  const hexEl=document.getElementById('colorHex'),rgbEl=document.getElementById('colorRgb'),hslEl=document.getElementById('colorHsl');
+  function parseColor(s){
+    s=s.trim();
+    let r,g,b;
+    // hex
+    let m=s.match(/^#?([0-9a-f]{3,8})$/i);
+    if(m){
+      let h=m[1];
+      if(h.length===3||h.length===4){h=h.split('').map(c=>c+c).join('')}
+      if(h.length===6)r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+      else if(h.length===8)r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+      if(r!=null&&!isNaN(r))return{r,g,b};
+    }
+    // rgb / rgba
+    m=s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if(m){r=+m[1];g=+m[2];b=+m[3];if(r<=255&&g<=255&&b<=255)return{r,g,b};}
+    // hsl / hsla
+    m=s.match(/^hsla?\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%/i);
+    if(m){let h=+m[1]/360,s=+m[2]/100,l=+m[3]/100;let c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs(h*6%2-1)),m2=l-c/2;[r,g,b]=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h*6)%6];r=Math.round((r+m2)*255);g=Math.round((g+m2)*255);b=Math.round((b+m2)*255);return{r,g,b};}
+    return null;
+  }
+  function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;let M=Math.max(r,g,b),m=Math.min(r,g,b),d=M-m,l=(M+m)/2;if(d===0)return[0,0,Math.round(l*100)];let s=d/(1-Math.abs(2*l-1));let h;if(M===r)h=((g-b)/d)%6;else if(M===g)h=(b-r)/d+2;else h=(r-g)/d+4;return[Math.round(h*60+360)%360,Math.round(s*100),Math.round(l*100)];}
+  function update(){
+    clearErr(errEl);const p=parseColor(inp.value);
+    if(!p){err(errEl,t('ui.invalid_color'));return;}
+    const hex='#'+[p.r,p.g,p.b].map(v=>v.toString(16).padStart(2,'0')).join('');
+    const rgb=`rgb(${p.r},${p.g},${p.b})`;
+    const hslArr=rgb2hsl(p.r,p.g,p.b);const hsl=`hsl(${hslArr[0]},${hslArr[1]}%,${hslArr[2]}%)`;
+    preview.style.background=hex;
+    hexEl.innerHTML=hex+' <button class="btn btn-sm" data-copy="colorHex">'+t('ui.copy')+'</button>';
+    rgbEl.innerHTML=rgb+' <button class="btn btn-sm" data-copy="colorRgb">'+t('ui.copy')+'</button>';
+    hslEl.innerHTML=hsl+' <button class="btn btn-sm" data-copy="colorHsl">'+t('ui.copy')+'</button>';
+    document.querySelectorAll('#colorOutput [data-copy]').forEach(b=>b.onclick=()=>copyText(b.parentElement.textContent.replace(t('ui.copy'),'').trim(),b));
+  }
+  inp.addEventListener('input',update);
+  update();
+}
+
+// --- Timestamp ---
+function toolTimestamp() {
+  const now=Math.floor(Date.now()/1000);
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.timestamp.name')}</div><div class="tool-desc">${t('tools.timestamp.desc')}</div></div>
+    <div class="ts-info">
+      <div class="ts-card"><div class="val" id="tsNow">${now}</div><div class="lbl">${t('ui.current_ts')}</div></div>
+      <div class="ts-card"><div class="val" id="tsNowDate">${new Date().toLocaleString()}</div><div class="lbl">${t('ui.current_date')}</div></div>
+    </div>
+    <div class="row">
+      <div><label>${t('ui.ts_input')}</label><input type="number" id="tsInput" value="${now}"></div>
+      <div><label>${t('ui.date_input')}</label><input type="datetime-local" id="tsDateInput"></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="tsToDate">${t('ui.to_date')}</button>
+      <button class="btn" id="tsToTs">${t('ui.to_ts')}</button>
+      <button class="btn" id="tsRefresh">${t('ui.generate')}</button>
+    </div>
+    <div class="error-msg" id="tsErr"></div>
+    <label>${t('ui.result')}</label>
+    <div class="result-box" id="tsResult"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="tsCopy">${t('ui.copy')}</button></div>`;
+}
+function bindTimestamp() {
+  const tsInp=document.getElementById('tsInput'),dateInp=document.getElementById('tsDateInput'),res=document.getElementById('tsResult'),errEl=document.getElementById('tsErr');
+  const nowEl=document.getElementById('tsNow'),nowDateEl=document.getElementById('tsNowDate');
+  function refreshNow(){const n=Math.floor(Date.now()/1000);nowEl.textContent=n;nowDateEl.textContent=new Date().toLocaleString();tsInp.value=n;}
+  document.getElementById('tsRefresh').onclick=refreshNow;
+  document.getElementById('tsToDate').onclick=()=>{clearErr(errEl);const v=parseInt(tsInp.value);if(isNaN(v)){err(errEl,t('ui.invalid_ts'));return;}res.innerHTML=new Date(v*1000).toLocaleString()+'<button class="btn btn-sm copy-btn show" id="tsCopy">'+t('ui.copy')+'</button>';bindCopy('tsCopy');};
+  document.getElementById('tsToTs').onclick=()=>{clearErr(errEl);const d=new Date(dateInp.value);if(isNaN(d.getTime())){if(dateInp.value){err(errEl,t('ui.invalid_ts'));return;}d.setTime(Date.now());}res.innerHTML=Math.floor(d.getTime()/1000)+'<button class="btn btn-sm copy-btn show" id="tsCopy">'+t('ui.copy')+'</button>';bindCopy('tsCopy');};
+  refreshNow();
+  function bindCopy(id){const el=document.getElementById(id);if(el)el.onclick=()=>copyText(res.textContent.replace(t('ui.copied'),'').trim(),el);}
+  bindCopy('tsCopy');
+}
+
+// --- UUID ---
+function toolUUID() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.uuid.name')}</div><div class="tool-desc">${t('tools.uuid.desc')}</div></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="uuidGen">${t('ui.generate')}</button>
+      <button class="btn" id="uuidClear">${t('ui.clear')}</button>
+    </div>
+    <label>${t('ui.count')}: <span id="uuidCount">0</span></label>
+    <div class="uuid-list" id="uuidList"></div>`;
+}
+function bindUUID() {
+  const list=document.getElementById('uuidList'),count=document.getElementById('uuidCount');
+  function genUUID(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16);});}
+  function addUUID(){
+    const id=genUUID();const item=document.createElement('div');item.className='uuid-item';
+    item.innerHTML='<span class="uuid-text">'+id+'</span><button class="btn btn-sm">'+t('ui.copy')+'</button>';
+    item.querySelector('button').onclick=()=>copyText(id,item.querySelector('button'));
+    list.prepend(item);count.textContent=list.children.length;
+  }
+  document.getElementById('uuidGen').onclick=addUUID;
+  document.getElementById('uuidClear').onclick=()=>{list.innerHTML='';count.textContent='0';};
+  addUUID();
+}
+
+// --- Regex ---
+function toolRegex() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.regex.name')}</div><div class="tool-desc">${t('tools.regex.desc')}</div></div>
+    <div class="row">
+      <div><label>${t('ui.pattern')}</label><input type="text" id="regexPattern" placeholder="${t('ui.placeholder_regex')}"></div>
+    </div>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="regexFlagGi"> i (${t('ui.flag_ci')})</label>
+      <label><input type="checkbox" id="regexFlagG" checked> g (${t('ui.flag_g')})</label>
+      <label><input type="checkbox" id="regexFlagM"> m (${t('ui.flag_m')})</label>
+      <label><input type="checkbox" id="regexFlagS"> s (${t('ui.flag_s')})</label>
+    </div>
+    <label>${t('ui.test_text')}</label>
+    <textarea id="regexInput" rows="6" placeholder="${t('ui.placeholder_test')}"></textarea>
+    <div class="error-msg" id="regexErr"></div>
+    <label>${t('ui.result')} (<span id="regexCount">0</span> ${t('ui.matches')})</label>
+    <div class="result-box" id="regexResult"><span style="color:var(--text-muted)">${t('ui.result')}</span></div>`;
+}
+function bindRegex() {
+  const pat=document.getElementById('regexPattern'),inp=document.getElementById('regexInput'),res=document.getElementById('regexResult'),errEl=document.getElementById('regexErr'),countEl=document.getElementById('regexCount');
+  function testRegex(){
+    clearErr(errEl);const p=pat.value;if(!p){res.innerHTML='<span style="color:var(--text-muted)">'+t('ui.result')+'</span>';countEl.textContent='0';return;}
+    let flags='';['Gi','G','M','S'].forEach(f=>{const el=document.getElementById('regexFlag'+f);if(el&&el.checked){flags+=f==='Gi'?'i':f.toLowerCase();}});
+    try{const re=new RegExp(p,flags);const txt=inp.value;let m,count=0,html='';const l=[];while((m=re.exec(txt))!==null){l.push(m);count++;if(!flags.includes('g'))break;}
+      if(count===0){res.innerHTML='<span style="color:var(--text-muted)">'+t('ui.no_match')+'</span>';countEl.textContent='0';return;}
+      let lastIdx=0;html+=txt.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      res.innerHTML='<span style="color:var(--accent-green)">✓ '+count+' '+t('ui.matches')+'</span><br>'+l.map((m,i)=>'<div style="padding:2px 0;border-bottom:1px solid var(--border);font-size:11px">#'+(i+1)+': &nbsp;<span style="color:var(--accent);font-weight:600">'+m[0].replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span> &nbsp;index: '+m.index+'</div>').join('');
+      countEl.textContent=count;
+    }catch(e){err(errEl,e.message);}
+  }
+  pat.addEventListener('input',testRegex);inp.addEventListener('input',testRegex);
+  ['Gi','G','M','S'].forEach(f=>{const el=document.getElementById('regexFlag'+f);if(el)el.addEventListener('change',testRegex);});
+  testRegex();
+}
+
+// --- Hash ---
+function toolHash() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.hash.name')}</div><div class="tool-desc">${t('tools.hash.desc')}</div></div>
+    <label>${t('ui.hash_algorithm')}</label>
+    <select id="hashAlgo"><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256" selected>SHA-256</option><option value="sha512">SHA-512</option></select>
+    <label>${t('ui.input')}</label>
+    <textarea id="hashInput" rows="6" placeholder="${t('ui.placeholder_hash')}"></textarea>
+    <div class="error-msg" id="hashErr"></div>
+    <label>${t('ui.output')}</label>
+    <div class="result-box" id="hashResult"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="hashCopy">${t('ui.copy')}</button></div>`;
+}
+async function bindHash() {
+  const inp=document.getElementById('hashInput'),algo=document.getElementById('hashAlgo'),res=document.getElementById('hashResult'),errEl=document.getElementById('hashErr');
+  async function compute(){clearErr(errEl);if(!inp.value.trim()){res.innerHTML='<span style="color:var(--text-muted)">'+t('ui.result')+'</span>';return;}
+    try{const h=await hashText(inp.value,algo.value);res.innerHTML=h+'<button class="btn btn-sm copy-btn show" id="hashCopy">'+t('ui.copy')+'</button>';bindCopy('hashCopy');}catch(e){err(errEl,e.message);}
+  }
+  inp.addEventListener('input',compute);algo.addEventListener('change',compute);
+  function bindCopy(id){const el=document.getElementById(id);if(el)el.onclick=()=>copyText(res.textContent.replace(t('ui.copied'),'').trim(),el);}
+  compute();
+}
+
+// --- Case ---
+function toolCase() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.case.name')}</div><div class="tool-desc">${t('tools.case.desc')}</div></div>
+    <label>${t('ui.input')}</label>
+    <input type="text" id="caseInput" placeholder="${t('ui.placeholder_text')}">
+    <label>${t('ui.all_formats')}</label>
+    <div id="caseOutput"></div>`;
+}
+function bindCase() {
+  const inp=document.getElementById('caseInput'),out=document.getElementById('caseOutput');
+  const LABELS=['camel','pascal','snake','kebab','upper','lower','title','dot'];
+  function convert(s){
+    if(!s.trim()){out.innerHTML='';return;}
+    // split into words
+    const words=s.match(/[A-Za-z0-9]+/g)||[s];
+    const lower=words.map(w=>w.toLowerCase());
+    const upper=words.map(w=>w.toUpperCase());
+    const cap=words.map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase());
+    const results={
+      camel: lower[0]+cap.slice(1).join(''),
+      pascal: cap.join(''),
+      snake: lower.join('_'),
+      kebab: lower.join('-'),
+      upper: upper.join('_'),
+      lower: lower.join(' '),
+      title: cap.join(' '),
+      dot: lower.join('.'),
+    };
+    out.innerHTML=LABELS.map(k=>`<div class="case-row"><span class="case-label">${t('ui.case_'+k)}</span><span class="case-value">${results[k]} <button class="btn btn-sm">${t('ui.copy')}</button></span></div>`).join('');
+    out.querySelectorAll('.case-row .btn').forEach((btn,i)=>{btn.onclick=()=>copyText(results[LABELS[i]],btn);});
+  }
+  inp.addEventListener('input',()=>convert(inp.value));
+  convert(inp.value);
+}
+
+// --- Base ---
+function toolBase() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.base.name')}</div><div class="tool-desc">${t('tools.base.desc')}</div></div>
+    <label>${t('ui.input')}</label>
+    <input type="text" id="baseInput" placeholder="${t('ui.placeholder_num')}" value="255">
+    <div class="error-msg" id="baseErr"></div>
+    <div class="base-grid" id="baseOutput">
+      <div class="base-item"><div class="base-label">${t('ui.hex')} (16)</div><div class="base-val" id="base16">ff <button class="btn btn-sm">${t('ui.copy')}</button></div></div>
+      <div class="base-item"><div class="base-label">${t('ui.dec')} (10)</div><div class="base-val" id="base10">255 <button class="btn btn-sm">${t('ui.copy')}</button></div></div>
+      <div class="base-item"><div class="base-label">${t('ui.oct')} (8)</div><div class="base-val" id="base8">377 <button class="btn btn-sm">${t('ui.copy')}</button></div></div>
+      <div class="base-item"><div class="base-label">${t('ui.bin')} (2)</div><div class="base-val" id="base2">11111111 <button class="btn btn-sm">${t('ui.copy')}</button></div></div>
+    </div>`;
+}
+function bindBase() {
+  const inp=document.getElementById('baseInput'),errEl=document.getElementById('baseErr');
+  const ids={16:'base16',10:'base10',8:'base8',2:'base2'};
+  function update(){
+    clearErr(errEl);const s=inp.value.trim();
+    if(!s)return;let num;
+    if(/^0x/i.test(s))num=BigInt(s);
+    else if(/^0b/i.test(s))num=BigInt(s);
+    else if(/^0o/i.test(s))num=BigInt(s);
+    else{try{num=BigInt(s);}catch{try{num=BigInt(Math.round(parseFloat(s)));}catch{err(errEl,t('ui.invalid_ts'));return}}}
+    const vals={16:num.toString(16),10:num.toString(10),8:num.toString(8),2:num.toString(2)};
+    for(const [base,id] of Object.entries(ids)){
+      const el=document.getElementById(id);
+      el.innerHTML=vals[base]+' <button class="btn btn-sm">'+t('ui.copy')+'</button>';
+      el.querySelector('.btn').onclick=()=>copyText(vals[base],el.querySelector('.btn'));
+    }
+  }
+  inp.addEventListener('input',update);
+  update();
+}
+
+// --- HTML Entities ---
+function toolHTML() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.html.name')}</div><div class="tool-desc">${t('tools.html.desc')}</div></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="htmlEncode">${t('ui.encode')}</button>
+      <button class="btn" id="htmlDecode">${t('ui.decode')}</button>
+      <button class="btn" id="htmlClear">${t('ui.clear')}</button>
+    </div>
+    <label>${t('ui.input')}</label>
+    <textarea id="htmlInput" rows="6" placeholder="${t('ui.placeholder_html')}"></textarea>
+    <div class="error-msg" id="htmlErr"></div>
+    <label>${t('ui.output')}</label>
+    <div class="result-box" id="htmlResult"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="htmlCopy">${t('ui.copy')}</button></div>`;
+}
+function bindHTML() {
+  const inp=document.getElementById('htmlInput'),res=document.getElementById('htmlResult'),errEl=document.getElementById('htmlErr');
+  const show=(v)=>{res.innerHTML=(v||'<span style=\"color:var(--text-muted)\">'+t('ui.result')+'</span>')+'<button class="btn btn-sm copy-btn show" id="htmlCopy">'+t('ui.copy')+'</button>';bindCopy('htmlCopy');};
+  document.getElementById('htmlEncode').onclick=()=>{clearErr(errEl);show(inp.value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'));};
+  document.getElementById('htmlDecode').onclick=()=>{clearErr(errEl);try{const ta=document.createElement('textarea');ta.innerHTML=inp.value;show(ta.value);}catch(e){err(errEl,t('ui.error'));}};
+  document.getElementById('htmlClear').onclick=()=>{inp.value='';show();clearErr(errEl);};
+  function bindCopy(id){const el=document.getElementById(id);if(el)el.onclick=()=>copyText(res.textContent.replace(t('ui.copied'),'').trim(),el);}
+  bindCopy('htmlCopy');
+}
+
+// --- JWT ---
+function toolJWT() {
+  return `
+    <div class="tool-header"><div class="tool-title">${t('tools.jwt.name')}</div><div class="tool-desc">${t('tools.jwt.desc')}</div></div>
+    <label>${t('ui.input')}</label>
+    <textarea id="jwtInput" rows="4" placeholder="${t('ui.placeholder_token')}"></textarea>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="jwtDecode">${t('ui.decode')}</button>
+      <button class="btn" id="jwtClear">${t('ui.clear')}</button>
+    </div>
+    <div class="error-msg" id="jwtErr"></div>
+    <label>${t('ui.jwt_header')}</label>
+    <div class="result-box" id="jwtHeader"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="jwtHeaderCopy">${t('ui.copy')}</button></div>
+    <label>${t('ui.jwt_payload')}</label>
+    <div class="result-box" id="jwtPayload"><span style="color:var(--text-muted)">${t('ui.result')}</span><button class="btn btn-sm copy-btn" id="jwtPayloadCopy">${t('ui.copy')}</button></div>
+    <label>${t('ui.jwt_exp')}</label>
+    <div class="result-box" id="jwtExp"><span style="color:var(--text-muted)">${t('ui.result')}</span></div>`;
+}
+function bindJWT() {
+  const inp=document.getElementById('jwtInput'),errEl=document.getElementById('jwtErr');
+  const hdr=document.getElementById('jwtHeader'),pay=document.getElementById('jwtPayload'),exp=document.getElementById('jwtExp');
+  function decodeJWT(){
+    clearErr(errEl);const s=inp.value.trim();if(!s){reset();return;}
+    const parts=s.split('.');
+    if(parts.length!==3){err(errEl,t('ui.invalid_token'));return;}
+    try{
+      const h=JSON.parse(atob(parts[0].replace(/-/g,'+').replace(/_/g,'/')));
+      const p=JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+      hdr.innerHTML=JSON.stringify(h,null,2)+'<button class="btn btn-sm copy-btn show" id="jwtHeaderCopy">'+t('ui.copy')+'</button>';
+      pay.innerHTML=JSON.stringify(p,null,2)+'<button class="btn btn-sm copy-btn show" id="jwtPayloadCopy">'+t('ui.copy')+'</button>';
+      if(p.exp){const d=new Date(p.exp*1000);const now=Date.now();const diff=p.exp*1000-now;const txt=(diff>0?t('ui.expires_prefix')+d.toLocaleString()+t('ui.expires_mid')+formatDuration(diff/1000)+t('ui.expires_suffix'):t('ui.expires_prefix')+d.toLocaleString()+t('ui.expires_mid')+t('ui.jwt_expired'));exp.innerHTML=txt+'<button class="btn btn-sm copy-btn show">'+t('ui.copy')+'</button>';exp.querySelector('.btn').onclick=()=>copyText(txt,exp.querySelector('.btn'));}
+      else exp.innerHTML='<span style="color:var(--text-muted)">N/A</span>';
+      bindCopy('jwtHeaderCopy',()=>hdr.textContent.replace(t('ui.copied'),'').trim());
+      bindCopy('jwtPayloadCopy',()=>pay.textContent.replace(t('ui.copied'),'').trim());
+    }catch(e){err(errEl,t('ui.invalid_token'));reset();}
+  }
+  function reset(){hdr.innerHTML='<span style="color:var(--text-muted)">'+t('ui.result')+'</span>';pay.innerHTML='<span style="color:var(--text-muted)">'+t('ui.result')+'</span>';exp.innerHTML='<span style="color:var(--text-muted)">N/A</span>';}
+  function formatDuration(s){const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);return(d?d+t('ui.remaining_days')+' ':'')+(h?h+t('ui.remaining_hours')+' ':'')+(m?m+t('ui.remaining_mins'):'');}
+  function bindCopy(id,getText){const el=document.getElementById(id);if(el)el.onclick=()=>copyText(getText(),el);}
+  document.getElementById('jwtDecode').onclick=decodeJWT;
+  document.getElementById('jwtClear').onclick=()=>{inp.value='';reset();clearErr(errEl);};
+}
+
+// ==================== Tool render map ====================
+const RENDER = {
+  json:     { html: toolJSON,     bind: bindJSON },
+  base64:   { html: toolBase64,   bind: bindBase64 },
+  url:      { html: toolURL,      bind: bindURL },
+  color:    { html: toolColor,    bind: bindColor },
+  timestamp:{ html: toolTimestamp,bind: bindTimestamp },
+  uuid:     { html: toolUUID,     bind: bindUUID },
+  regex:    { html: toolRegex,    bind: bindRegex },
+  hash:     { html: toolHash,     bind: bindHash },
+  case:     { html: toolCase,     bind: bindCase },
+  base:     { html: toolBase,     bind: bindBase },
+  html:     { html: toolHTML,     bind: bindHTML },
+  jwt:      { html: toolJWT,      bind: bindJWT },
+};
+
+// ==================== Main render ====================
+function renderCurrentTool() {
+  const main = document.getElementById('mainContent');
+  const r = RENDER[currentTool];
+  if (!r) return;
+  main.innerHTML = `<div class="tool-panel active" id="tool-${currentTool}">${r.html()}</div>`;
+  r.bind();
+}
+
+// ==================== Init ====================
+document.addEventListener('DOMContentLoaded', () => {
+  // Lang toggle
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => setLang(b.dataset.lang));
+  });
+  setLang(lang);
+
+  // Sidebar click
+  document.getElementById('sidebar').addEventListener('click', e => {
+    const item = e.target.closest('.sidebar-item');
+    if (!item) return;
+    const tool = item.dataset.tool;
+    if (tool === currentTool) return;
+    currentTool = tool;
+    localStorage.setItem('devtools-current', tool);
+    document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+    item.classList.add('active');
+    renderCurrentTool();
+  });
+});
+</script>
+</body>
+</html>
